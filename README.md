@@ -2,7 +2,9 @@
 
 A full-stack CRUD application built with **MongoDB, Express, Angular 15, and Node.js**.  
 It lets you create, read, update, delete, and search tutorials.  
-It includes a **CI/CD pipeline** using **GitHub Actions**, **Docker**, **Docker Hub**, and **AWS EC2**.
+It is deployed automatically using a **CI/CD pipeline** built with **GitHub Actions**, **Docker**, **Docker Hub**, and **AWS EC2**.
+
+# Click Here to see The [Deployed Site 🌐](http://ec2-3-83-149-83.compute-1.amazonaws.com/)
 
 ---
 
@@ -18,25 +20,9 @@ It includes a **CI/CD pipeline** using **GitHub Actions**, **Docker**, **Docker 
 ### App — Tutorial Details
 ![Tutorial Details](screenshots/tutorial-details.png)
 
-### GitHub Actions — All Workflow Runs
-
-![Pipeline Overview](screenshots/pipeline-overview.png)
-
-### GitHub Actions — Pipeline Running
-
-![Pipeline Running](screenshots/pipeline-running.png)
-
-### GitHub Actions — Pipeline Success
-
-![Pipeline Success](screenshots/pipeline-success.png)
-
 ### EC2 — Containers Running
 
 ![EC2 Containers](screenshots/ec2-containers.png)
-
-### GitHub — Secrets Added
-
-![GitHub Secrets](screenshots/github-secrets.png)
 
 ---
 
@@ -45,17 +31,15 @@ It includes a **CI/CD pipeline** using **GitHub Actions**, **Docker**, **Docker 
 1. [Project Structure](#1-project-structure)
 2. [What the App Does](#2-what-the-app-does)
 3. [Tech Stack](#3-tech-stack)
-4. [Run Locally Without Docker](#4-run-locally-without-docker)
-5. [Run Locally With Docker](#5-run-locally-with-docker)
-6. [CI/CD Pipeline Overview](#6-cicd-pipeline-overview)
-7. [Step-by-Step: Docker Hub Setup](#7-step-by-step-docker-hub-setup)
-8. [Step-by-Step: AWS EC2 Setup](#8-step-by-step-aws-ec2-setup)
-9. [Step-by-Step: GitHub Secrets Setup](#9-step-by-step-github-secrets-setup)
-10. [Step-by-Step: Push Code and Trigger Pipeline](#10-step-by-step-push-code-and-trigger-pipeline)
-11. [Verify Deployment](#11-verify-deployment)
-12. [Useful Commands](#12-useful-commands)
-13. [Project Files Explained](#13-project-files-explained)
-14. [Troubleshooting](#14-troubleshooting)
+4. [CI/CD Pipeline Overview](#4-cicd-pipeline-overview)
+5. [Step-by-Step: Docker Hub Setup](#5-step-by-step-docker-hub-setup)
+6. [Step-by-Step: AWS EC2 Setup](#6-step-by-step-aws-ec2-setup)
+7. [Step-by-Step: GitHub Secrets Setup](#7-step-by-step-github-secrets-setup)
+8. [Step-by-Step: Push Code and Trigger Pipeline](#8-step-by-step-push-code-and-trigger-pipeline)
+9. [Verify Deployment](#9-verify-deployment)
+10. [Memory & Performance Management](#10-memory--performance-management)
+11. [Project Files Explained](#11-project-files-explained)
+12. [Mistakes I Made — and How I Fixed Them](#12-mistakes-i-made--and-how-i-fixed-them)
 
 ---
 
@@ -94,7 +78,6 @@ crud-dd-task-mean-app/
 │           ├── services/tutorial.service.ts
 │           └── models/tutorial.model.ts
 │
-├── docker-compose.yml             ← Local development stack
 ├── docker-compose.prod.yml        ← Production stack on EC2
 ├── .env.example                   ← Environment variable template
 └── scripts/
@@ -135,87 +118,7 @@ The backend exposes a REST API at `/api/tutorials` with full CRUD endpoints.
 
 ---
 
-## 4. Run Locally Without Docker
-
-### Prerequisites
-- Node.js 18+
-- MongoDB running locally on port 27017
-
-### Step 1 — Start the Backend
-
-```bash
-cd backend
-npm install
-node server.js
-```
-
-Backend runs at: `http://localhost:8080`
-
-### Step 2 — Start the Frontend
-
-Open a new terminal:
-
-```bash
-cd frontend
-npm install
-ng serve --port 8081
-```
-
-Frontend runs at: `http://localhost:8081`
-
-> The frontend calls the backend at `http://localhost:8080/api` by default (set in `environment.ts`).
-
----
-
-## 5. Run Locally With Docker
-
-### Prerequisites
-- Docker Desktop installed and running
-
-### Step 1 — Copy the environment file
-
-```bash
-# Windows
-copy .env.example .env
-
-# Mac / Linux
-cp .env.example .env
-```
-
-The default values in `.env` work out of the box for local Docker.
-
-### Step 2 — Build and start all containers
-
-```bash
-docker compose up --build
-```
-
-This starts 3 containers:
-- `mongo` — MongoDB database
-- `backend` — Express API
-- `frontend` — Angular app served by Nginx on port 80
-
-### Step 3 — Open the app
-
-Go to: `http://localhost`
-
-![App Running on EC2](screenshots/tutorials-list.png)
-
-### Stop the app
-
-```bash
-docker compose down
-```
-
-To also delete the database volume:
-
-```bash
-docker compose down -v
-```
-
----
-
-## 6. CI/CD Pipeline Overview
+## 4. CI/CD Pipeline Overview
 
 The pipeline runs automatically every time you push to `main` or `master`.  
 It has **2 jobs** that run in order:
@@ -252,7 +155,7 @@ Push code to GitHub (main / master)
 
 ---
 
-## 7. Step-by-Step: Docker Hub Setup
+## 5. Step-by-Step: Docker Hub Setup
 
 ### Step 1 — Create a Docker Hub account
 
@@ -283,9 +186,10 @@ You will now have:
 6. **Copy the token immediately** — you cannot see it again
 
 ![personal Access Token](screenshots/access-token-docker.png)
+
 ---
 
-## 8. Step-by-Step: AWS EC2 Setup
+## 6. Step-by-Step: AWS EC2 Setup
 
 ### Step 1 — Launch an EC2 instance
 
@@ -297,8 +201,6 @@ You will now have:
 6. Network settings → **Allow SSH (port 22)** from your IP
 7. Network settings → **Allow HTTP (port 80)** from anywhere (`0.0.0.0/0`)
 8. Click **Launch Instance**
-
-> 📸 _Add screenshot of the EC2 Launch Instance page_
 
 ### Step 2 — Connect to the EC2 instance
 
@@ -336,9 +238,10 @@ docker compose version
 ```
 
 ![Docker Version](screenshots/docker-version.png)
+
 ---
 
-## 9. Step-by-Step: GitHub Secrets Setup
+## 7. Step-by-Step: GitHub Secrets Setup
 
 These secrets are encrypted and injected into the pipeline at runtime. They are **never visible** in logs.
 
@@ -355,7 +258,7 @@ These secrets are encrypted and injected into the pipeline at runtime. They are 
 | Secret Name | Value | Where to get it |
 |---|---|---|
 | `DOCKERHUB_USERNAME` | Your Docker Hub username | Your Docker Hub login name |
-| `DOCKERHUB_TOKEN` | The access token from Step 7.3 | Docker Hub → Account Settings → Security |
+| `DOCKERHUB_TOKEN` | The access token from Step 5.3 | Docker Hub → Account Settings → Security |
 | `EC2_HOST` | Your EC2 public IP | AWS Console → EC2 → Instances → Public IPv4 address |
 | `EC2_USER` | `ubuntu` | Default username for Ubuntu AMI |
 | `EC2_SSH_KEY` | Full contents of your `.pem` file | Open `.pem` in Notepad, copy everything including the `-----BEGIN` and `-----END` lines |
@@ -370,7 +273,7 @@ You should see all 7 names listed (values are always hidden).
 
 ---
 
-## 10. Step-by-Step: Push Code and Trigger Pipeline
+## 8. Step-by-Step: Push Code and Trigger Pipeline
 
 ### Step 1 — Initialize git (if not done yet)
 
@@ -408,7 +311,7 @@ git push -u origin main
 
 ---
 
-## 11. Verify Deployment
+## 9. Verify Deployment
 
 ### Open the app in a browser
 
@@ -451,11 +354,100 @@ Expected response: `{"message":"Welcome to the Tutorials API."}`
 Go to `https://hub.docker.com/u/your-username` and you should see both images with a recent **Last pushed** timestamp.
 
 ![docker image Updates](screenshots/docker-image-verify.png)
----
 
 ---
 
-## 13. Project Files Explained
+## 10. Memory & Performance Management
+
+This is where the pipeline does more than just "build and ship." Every deliberate choice here reduces resource usage on the free-tier EC2 instance and makes the app faster for the user.
+
+---
+
+### Multi-Stage Docker Builds — Tiny Images, Faster Pulls
+
+Both the backend and frontend use **multi-stage Dockerfiles**. The idea is simple: use a large image to build, then copy only what's needed into a small final image.
+
+**Backend:**
+- Stage 1 runs `npm ci --only=production` — installs only production dependencies, nothing for testing or dev tooling.
+- Stage 2 starts from a slim Node.js base, copies only the installed `node_modules` and source code, and sets a non-root user.
+
+**Frontend:**
+- Stage 1 uses a full Node.js image to compile Angular with AOT (Ahead-of-Time) compilation — this pre-compiles templates so the browser doesn't have to.
+- Stage 2 starts from `nginx:alpine` (a ~5 MB base) and only copies the compiled static files. The final image is around **30 MB** instead of the 1+ GB a development image would be.
+
+Smaller images mean faster pulls from Docker Hub to EC2 on every deploy.
+
+---
+
+### Health Checks — No Traffic Before Ready
+
+Every container in `docker-compose.prod.yml` has a `healthcheck` defined. Docker polls each container until it reports healthy before considering the stack up.
+
+- **MongoDB** — pings itself with `mongosh --eval "db.adminCommand('ping')"`
+- **Backend** — hits `http://localhost:8080/api/` and expects a 200 response
+- **Frontend (Nginx)** — hits `http://localhost/` and expects a 200 response
+
+This prevents a race condition where the backend starts up but MongoDB isn't ready yet, which would cause the first few API calls to fail on every cold deploy.
+
+---
+
+### Nginx Gzip Compression — Less Data Over the Wire
+
+The `nginx.conf` enables gzip compression for all static assets and API responses:
+
+```nginx
+gzip on;
+gzip_types text/plain text/css application/json application/javascript;
+gzip_min_length 1024;
+```
+
+The compiled Angular bundle is large. With gzip enabled, it is compressed before being sent to the browser — typically reducing transfer size by 60–70%. This makes the initial page load noticeably faster, especially on slower connections.
+
+---
+
+### Log Rotation — Preventing Disk Full Crashes
+
+Docker's default logging behavior writes container logs to files on disk indefinitely. On a free-tier EC2 instance, this can silently fill the disk within days, causing all containers to crash.
+
+`docker-compose.prod.yml` configures log rotation on every container:
+
+```yaml
+logging:
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+```
+
+This caps each container's logs at 10 MB per file and keeps only the last 3 files — a maximum of 30 MB total per container. Old log files are automatically rotated out.
+
+---
+
+### Automatic Image Pruning — Keeping Disk Clean After Every Deploy
+
+The last step in Job 2 of the pipeline runs:
+
+```bash
+docker image prune -a -f
+```
+
+Every deploy pulls fresh images from Docker Hub and leaves the old ones sitting on disk. On a small instance, even 3–4 deploy cycles can fill the disk with stale image layers. This command removes every image that isn't being used by a running container, immediately after the new containers are confirmed up. Disk stays clean automatically without manual intervention.
+
+---
+
+### npm ci — Reproducible Builds Every Time
+
+The backend Dockerfile uses `npm ci` instead of `npm install`:
+
+```dockerfile
+RUN npm ci --only=production
+```
+
+`npm ci` installs the exact versions recorded in `package-lock.json` and fails if the lock file is missing or out of sync with `package.json`. This ensures every build on GitHub Actions produces the exact same `node_modules` as every other build — no version drift, no "it worked yesterday" surprises.
+
+---
+
+## 11. Project Files Explained
 
 | File | What it does |
 |---|---|
@@ -463,9 +455,7 @@ Go to `https://hub.docker.com/u/your-username` and you should see both images wi
 | `backend/package-lock.json` | Locks exact dependency versions. Required by `npm ci` inside Docker. Do not delete or add to `.gitignore`. |
 | `frontend/Dockerfile` | Two-stage build: Stage 1 compiles Angular with AOT optimisation. Stage 2 serves the static files with Nginx (~30 MB final image). |
 | `frontend/nginx.conf` | Serves Angular static files, proxies all `/api/*` requests to the backend container, enables gzip compression, sets security headers, handles Angular client-side routing. |
-| `frontend/src/environments/environment.ts` | API URL for local development: `http://localhost:8080/api` |
 | `frontend/src/environments/environment.prod.ts` | API URL for production: `/api` (nginx proxies it to the backend container) |
-| `docker-compose.yml` | Local dev stack — builds images from source, exposes ports, mounts volumes. |
 | `docker-compose.prod.yml` | Production stack on EC2 — pulls images from Docker Hub, sets memory limits, configures health checks and log rotation. |
 | `.env.example` | Template for environment variables. Copy to `.env` for local use. Never commit `.env`. |
 | `.github/workflows/ci-cd.yml` | The CI/CD pipeline: Job 1 builds and pushes images to Docker Hub. Job 2 SSHs into EC2 and deploys. |
@@ -473,29 +463,21 @@ Go to `https://hub.docker.com/u/your-username` and you should see both images wi
 
 ---
 
-## 14. Mistakes I Made — and How I Fixed Them
+## 12. Mistakes I Made — and How I Fixed Them
 
 This section isn't just a dry troubleshooting guide. These are real mistakes I ran into while building and deploying this project for the first time. Each one taught me something I won't forget.
 
 ---
 
-### "npm ci failed — exit code 1" — The Missing Lock File
+### "Invalid workflow file" — Secrets Don't Work Everywhere
 
-The very first time I pushed my code and watched the GitHub Actions pipeline run, it failed almost immediately at the **"Build and push backend image"** step. The error was blunt: `npm ci failed — exit code 1`.
+After getting the build to pass, I tried to make the pipeline cleaner by referencing secrets at the top-level `env:` block in my workflow YAML — something like `CORS_ORIGIN: ${{ secrets.CORS_ORIGIN }}` outside of any job step.
 
-I stared at it for a while before I realized what happened — I had never committed `backend/package-lock.json`. I ran `npm install` locally and just moved on without thinking about the lock file. But `npm ci` (which the Docker build uses) requires it to exist. Without it, the build has nothing to work with.
+GitHub Actions immediately flagged it as an **invalid workflow file**.
 
-The fix was simple once I understood the cause:
+I didn't know this at the time, but GitHub Actions does **not** allow `${{ secrets.XXX }}` expressions outside of `steps:`. They are only resolved inside job steps. Moving the secret references inside the relevant `steps:` blocks fixed it entirely.
 
-```bash
-cd backend
-npm install
-git add package-lock.json
-git commit -m "add package-lock.json"
-git push
-```
-
-**Lesson:** Always commit your lock files. `npm ci` is strict by design — it ensures reproducible installs across environments.
+**Lesson:** GitHub Actions secrets have a scope. When in doubt, keep them inside `steps:`.
 
 ---
 
@@ -511,3 +493,21 @@ I went back to Docker Hub, regenerated the token with the right permissions, upd
 
 ---
 
+
+### EC2 Disk Full — Old Images Piling Up
+
+After several pipeline runs, a deploy suddenly failed with a disk space error. The EC2 free-tier instance has limited storage, and every successful pipeline run was leaving behind old Docker images that were never cleaned up.
+
+I ran these commands on the instance to reclaim space:
+
+```bash
+docker container prune -f
+docker image prune -a -f
+df -h /
+```
+
+That freed up several gigabytes instantly. I now make it a habit to prune periodically, and the pipeline also runs `docker image prune -a -f` automatically after every deploy.
+
+**Lesson:** Docker images accumulate fast. On small instances, make image cleanup part of your routine — and automate it in the pipeline.
+
+---
