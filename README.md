@@ -18,21 +18,25 @@ It includes a **CI/CD pipeline** using **GitHub Actions**, **Docker**, **Docker 
 ### App — Tutorial Details
 ![Tutorial Details](screenshots/tutorial-details.png)
 
+### GitHub Actions — All Workflow Runs
+
+![Pipeline Overview](screenshots/pipeline-overview.png)
+
 ### GitHub Actions — Pipeline Running
-> 📸 _Screenshot: Add a screenshot of the GitHub Actions workflow running here_
-<!-- Replace this line with: ![Pipeline](screenshots/pipeline-running.png) -->
+
+![Pipeline Running](screenshots/pipeline-running.png)
 
 ### GitHub Actions — Pipeline Success
-> 📸 _Screenshot: Add a screenshot showing all jobs green (passed) here_
-<!-- Replace this line with: ![Pipeline Success](screenshots/pipeline-success.png) -->
 
-### Docker Hub — Images Pushed
-> 📸 _Screenshot: Add a screenshot of your Docker Hub repo showing mean-backend and mean-frontend images_
-<!-- Replace this line with: ![Docker Hub](screenshots/dockerhub-images.png) -->
+![Pipeline Success](screenshots/pipeline-success.png)
 
 ### EC2 — Containers Running
-> 📸 _Screenshot: Add a screenshot of `docker compose ps` output on EC2_
-<!-- Replace this line with: ![EC2 Containers](screenshots/ec2-containers.png) -->
+
+![EC2 Containers](screenshots/ec2-containers.png)
+
+### GitHub — Secrets Added
+
+![GitHub Secrets](screenshots/github-secrets.png)
 
 ---
 
@@ -195,7 +199,7 @@ This starts 3 containers:
 
 Go to: `http://localhost`
 
-> 📸 _Add screenshot of the running app here_
+![App Running on EC2](screenshots/tutorials-list.png)
 
 ### Stop the app
 
@@ -244,7 +248,7 @@ Push code to GitHub (main / master)
    └─────────────────────────────────┘
 ```
 
-> 📸 _Add screenshot of GitHub Actions jobs here_
+![Pipeline Overview](screenshots/pipeline-running.png)
 
 ---
 
@@ -254,7 +258,6 @@ Push code to GitHub (main / master)
 
 Go to [https://hub.docker.com](https://hub.docker.com) and sign up (free).
 
-> 📸 _Add screenshot of Docker Hub sign up page_
 
 ### Step 2 — Create two repositories
 
@@ -266,7 +269,7 @@ You will now have:
 - `your-username/mean-backend`
 - `your-username/mean-frontend`
 
-> 📸 _Add screenshot of your two Docker Hub repositories_
+![Docker Hub repo's](screenshots/dockerhub-two-repo.png)
 
 ### Step 3 — Create an Access Token
 
@@ -279,8 +282,7 @@ You will now have:
 5. Click **Generate**
 6. **Copy the token immediately** — you cannot see it again
 
-> 📸 _Add screenshot of the token creation screen_
-
+![personal Access Token](screenshots/access-token-docker.png)
 ---
 
 ## 8. Step-by-Step: AWS EC2 Setup
@@ -303,24 +305,16 @@ You will now have:
 On Windows (PowerShell):
 
 ```powershell
-ssh -i "your-key.pem" ubuntu@your-ec2-public-ip
+ssh -i "your-key.pem" ubuntu@my-ec2-public-ip
 ```
 
-On Mac / Linux:
-
-```bash
-chmod 400 your-key.pem
-ssh -i "your-key.pem" ubuntu@your-ec2-public-ip
-```
-
-> 📸 _Add screenshot of a successful SSH connection_
 
 ### Step 3 — Run the setup script
 
 Once connected to EC2, run:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/scripts/setup-ec2.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Akash2king/CICD-Mean/main/scripts/setup-ec2.sh | bash
 ```
 
 This installs Docker, Docker Compose, AWS CLI, and creates the `~/app` directory.
@@ -341,8 +335,7 @@ docker --version
 docker compose version
 ```
 
-> 📸 _Add screenshot showing docker --version output_
-
+![Docker Version](screenshots/docker-version.png)
 ---
 
 ## 9. Step-by-Step: GitHub Secrets Setup
@@ -355,7 +348,7 @@ These secrets are encrypted and injected into the pipeline at runtime. They are 
 2. Click **Settings** → **Secrets and variables** → **Actions**
 3. Click **New repository secret** for each secret below
 
-> 📸 _Add screenshot of the GitHub Secrets page_
+![GitHub Secrets](screenshots/github-secrets.png)
 
 ### Step 2 — Add all 7 secrets
 
@@ -373,7 +366,7 @@ These secrets are encrypted and injected into the pipeline at runtime. They are 
 
 You should see all 7 names listed (values are always hidden).
 
-> 📸 _Add screenshot of all 7 secrets listed in GitHub_
+![GitHub Secrets Listed](screenshots/github-secrets.png)
 
 ---
 
@@ -390,7 +383,7 @@ git commit -m "Initial commit"
 ### Step 2 — Connect to GitHub and push
 
 ```bash
-git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO.git
+git remote add origin https://github.com/Akash2king/CICD-Mean.git
 git branch -M main
 git push -u origin main
 ```
@@ -402,7 +395,7 @@ git push -u origin main
 3. Click **CI/CD — MEAN Stack** to open the running pipeline
 4. Click each job to see live logs
 
-> 📸 _Add screenshot of the Actions tab with pipeline running_
+![Pipeline Running](screenshots/pipeline-running.png)
 
 ### Step 4 — What a successful run looks like
 
@@ -411,7 +404,7 @@ git push -u origin main
 ✅ Deploy to EC2   — containers restarted, old images cleaned up
 ```
 
-> 📸 _Add screenshot of both jobs showing green checkmarks_
+![Pipeline Success](screenshots/pipeline-success.png)
 
 ---
 
@@ -423,7 +416,7 @@ git push -u origin main
 http://your-ec2-public-ip
 ```
 
-> 📸 _Add screenshot of the live app on EC2_
+![Live App on EC2](screenshots/tutorial-details.png)
 
 ### Check container status on EC2
 
@@ -443,7 +436,7 @@ backend     your-username/mean-backend:latest  running (healthy)
 frontend    your-username/mean-frontend:latest running (healthy)
 ```
 
-> 📸 _Add screenshot of docker compose ps output showing all healthy_
+![EC2 Containers Running](screenshots/ec2-containers.png)
 
 ### Test the backend API directly
 
@@ -457,71 +450,8 @@ Expected response: `{"message":"Welcome to the Tutorials API."}`
 
 Go to `https://hub.docker.com/u/your-username` and you should see both images with a recent **Last pushed** timestamp.
 
-> 📸 _Add screenshot of Docker Hub showing both images with latest tag_
-
+![docker image Updates](screenshots/docker-image-verify.png)
 ---
-
-## 12. Useful Commands
-
-### Local Development
-
-```bash
-# Start all containers (builds images first)
-docker compose up --build
-
-# Start in background
-docker compose up -d --build
-
-# Stop all containers
-docker compose down
-
-# Stop and delete volumes (wipes database)
-docker compose down -v
-
-# View logs
-docker compose logs -f
-
-# Rebuild only one service
-docker compose up -d --build backend
-```
-
-### On EC2 (after SSH in)
-
-```bash
-cd ~/app
-
-# View running containers
-docker compose -f docker-compose.prod.yml ps
-
-# View live logs
-docker compose -f docker-compose.prod.yml logs -f
-
-# Restart a single service
-docker compose -f docker-compose.prod.yml restart backend
-
-# Stop everything
-docker compose -f docker-compose.prod.yml down
-
-# Check disk space
-df -h /
-
-# See Docker disk usage
-docker system df
-
-# Manually remove unused images
-docker image prune -a -f
-```
-
-### Docker Hub
-
-```bash
-# Pull images manually
-docker pull your-username/mean-backend:latest
-docker pull your-username/mean-frontend:latest
-
-# List all local images
-docker images
-```
 
 ---
 
@@ -543,13 +473,20 @@ docker images
 
 ---
 
-## 14. Troubleshooting
+## 14. Mistakes I Made — and How I Fixed Them
 
-**Pipeline fails at "Build and push backend image"**
-```
-npm ci failed — exit code 1
-```
-The `backend/package-lock.json` is missing or not committed. Run:
+This section isn't just a dry troubleshooting guide. These are real mistakes I ran into while building and deploying this project for the first time. Each one taught me something I won't forget.
+
+---
+
+### "npm ci failed — exit code 1" — The Missing Lock File
+
+The very first time I pushed my code and watched the GitHub Actions pipeline run, it failed almost immediately at the **"Build and push backend image"** step. The error was blunt: `npm ci failed — exit code 1`.
+
+I stared at it for a while before I realized what happened — I had never committed `backend/package-lock.json`. I ran `npm install` locally and just moved on without thinking about the lock file. But `npm ci` (which the Docker build uses) requires it to exist. Without it, the build has nothing to work with.
+
+The fix was simple once I understood the cause:
+
 ```bash
 cd backend
 npm install
@@ -558,41 +495,19 @@ git commit -m "add package-lock.json"
 git push
 ```
 
-**Pipeline fails: "Invalid workflow file"**  
-A `${{ secrets.XXX }}` expression is used outside of a job step (e.g., in top-level `env:` or `environment.url:`). Secrets are only allowed inside `steps:`.
-
-**Docker Hub push fails**  
-Check `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets. The token needs **Read, Write, Delete** permissions.
-
-**EC2 deploy fails — SSH connection refused**  
-Check that port 22 is open in the EC2 Security Group. Verify `EC2_HOST`, `EC2_USER`, and `EC2_SSH_KEY` secrets are correct.
-
-**App loads but API calls return 404**  
-Check `CORS_ORIGIN` secret — it must match your EC2 IP exactly: `http://1.2.3.4` (no trailing slash, no port).
-
-**App shows blank page after deploy**  
-Run on EC2:
-```bash
-cd ~/app
-docker compose -f docker-compose.prod.yml logs frontend
-docker compose -f docker-compose.prod.yml logs backend
-```
-
-**EC2 disk is full**  
-Run on EC2:
-```bash
-docker container prune -f
-docker image prune -a -f
-df -h /
-```
+**Lesson:** Always commit your lock files. `npm ci` is strict by design — it ensures reproducible installs across environments.
 
 ---
 
-## How to Add Screenshots
+### Docker Hub Push Failed — Wrong Token Permissions
 
-1. Create a `screenshots/` folder in the project root
-2. Take screenshots and save them there (e.g. `screenshots/tutorials-list.png`)
-3. Replace the `> 📸 _Screenshot: ..._` lines in this README with:
-```markdown
-![Description](screenshots/your-file.png)
-```
+Once the workflow file was valid and the images were building, the push to Docker Hub failed. I had created a Docker Hub access token, added it as a secret, and assumed it would just work.
+
+It didn't — because I had generated the token with **Read-only** permissions. The pipeline needs to push images, so the token must have **Read, Write, Delete** permissions.
+
+I went back to Docker Hub, regenerated the token with the right permissions, updated the `DOCKERHUB_TOKEN` secret in GitHub, and the push worked on the next run.
+
+**Lesson:** Pay attention to permission scopes when generating tokens. A read-only token will silently fail on push.
+
+---
+
