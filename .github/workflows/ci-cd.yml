@@ -1,0 +1,105 @@
+name: CI/CD — MEAN Stack
+
+# Trigger: runs on every push to main or master branch
+on:
+  push:
+    branches: [main, master]
+
+# GitHub Secrets needed (Settings → Secrets and variables → Actions):
+#   DOCKERHUB_USERNAME  — your Docker Hub username
+#   DOCKERHUB_TOKEN     — Docker Hub access token
+#   EC2_HOST            — EC2 public IP address
+#   EC2_USER            — SSH username (ubuntu)
+#   EC2_SSH_KEY         — contents of your .pem private key file
+#   MONGO_URI           — mongodb://mongo:27017/dd_db
+#   CORS_ORIGIN         — http://your-ec2-ip
+
+jobs:
+
+  # ── JOB 1: Build and push Docker images to Docker Hub ──────────────────────
+  build-and-push:
+    name: Build and Push Images
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push backend image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/mean-backend:latest ./backend
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/mean-backend:latest
+
+      - name: Build and push frontend image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/mean-frontend:latest ./frontend
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/mean-frontend:latest
+
+  # ── JOB 2: Deploy to EC2 via SSH ───────────────────────────────────────────
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Copy docker-compose.prod.yml to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host:     ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key:      ${{ secrets.EC2_SSH_KEY }}
+          source:   "docker-compose.prod.yml"
+          target:   "~/app/"
+
+      - name: SSH into EC2 and deploy
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN:    ${{ secrets.DOCKERHUB_TOKEN }}
+          MONGO_URI:          ${{ secrets.MONGO_URI }}
+          CORS_ORIGIN:        ${{ secrets.CORS_ORIGIN }}
+        with:
+          host:     ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key:      ${{ secrets.EC2_SSH_KEY }}
+          envs:     DOCKERHUB_USERNAME,DOCKERHUB_TOKEN,MONGO_URI,CORS_ORIGIN
+          script: |
+            set -e
+            cd ~/app
+
+            # Login to Docker Hub
+            echo "$DOCKERHUB_TOKEN" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
+
+            # Write .env file for docker-compose
+            cat > .env << EOF
+            DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}
+            IMAGE_TAG=latest
+            MONGO_URI=${MONGO_URI}
+            CORS_ORIGIN=${CORS_ORIGIN}
+            NODE_ENV=production
+            EOF
+
+            # Pull latest images
+            docker compose -f docker-compose.prod.yml pull
+
+            # Restart containers
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans --no-build
+
+            # Show running containers
+            docker compose -f docker-compose.prod.yml ps
+
+            # Logout and clean up old images
+            docker logout
+            docker container prune -f
+            docker image prune -a -f
+
+            echo "Deployment done!"

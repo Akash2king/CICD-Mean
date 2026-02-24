@@ -1,0 +1,118 @@
+# ── PRODUCTION (EC2) ──────────────────────────────────────────────────────────
+# This file is copied to ~/app/ on the EC2 instance by the GitHub Actions deploy job.
+#
+# Required environment variables (written to ~/app/.env by the deploy step):
+#   DOCKERHUB_USERNAME    — your Docker Hub username
+#   IMAGE_TAG             — 8-char Git SHA written by CI  (e.g. a1b2c3d4)
+#   MONGO_URI             — MongoDB connection string
+#   CORS_ORIGIN           — comma-separated allowed origins
+# ──────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── MongoDB (self-hosted on EC2 — replace with Atlas by removing this service) ─
+  mongo:
+    image: mongo:6.0
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: dd_db
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - backend-net
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ── Express API ───────────────────────────────────────────────────────────────
+  backend:
+    image: ${DOCKERHUB_USERNAME}/mean-backend:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      NODE_ENV:    production
+      PORT:        8080
+      MONGO_URI:   ${MONGO_URI:-mongodb://mongo:27017/dd_db}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
+      NODE_OPTIONS: "--max-old-space-size=512"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - backend-net
+      - frontend-net
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
+        reservations:
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ── Angular / Nginx ───────────────────────────────────────────────────────────
+  frontend:
+    image: ${DOCKERHUB_USERNAME}/mean-frontend:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      # Uncomment when TLS is configured (e.g. via Certbot / nginx-proxy):
+      # - "443:443"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - frontend-net
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+        reservations:
+          memory: 64M
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  backend-net:
+    driver: bridge
+    internal: true   # Mongo is NOT reachable from outside Docker
+  frontend-net:
+    driver: bridge
+
+volumes:
+  mongo_data:
+    driver: local
