@@ -6,6 +6,7 @@ It is deployed automatically using a **CI/CD pipeline** built with **GitHub Acti
 
 # Click Here to see The [Deployed Site 🌐](http://ec2-3-83-149-83.compute-1.amazonaws.com/)
 
+![Archicture Diagram](screenshots/Architecture.png)
 ---
 
 ## Screenshots
