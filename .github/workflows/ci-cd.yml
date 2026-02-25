@@ -1,29 +1,17 @@
 name: CI/CD — MEAN Stack
 
-# Trigger: runs on every push to main or master branch
 on:
   push:
     branches: [main, master]
 
-# GitHub Secrets needed (Settings → Secrets and variables → Actions):
-#   DOCKERHUB_USERNAME  — your Docker Hub username
-#   DOCKERHUB_TOKEN     — Docker Hub access token
-#   EC2_HOST            — EC2 public IP address
-#   EC2_USER            — SSH username (ubuntu)
-#   EC2_SSH_KEY         — contents of your .pem private key file
-#   MONGO_URI           — mongodb://mongo:27017/dd_db
-#   CORS_ORIGIN         — http://your-ec2-ip
-
 jobs:
 
-  # ── JOB 1: Build and push Docker images to Docker Hub ──────────────────────
   build-and-push:
     name: Build and Push Images
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -31,36 +19,24 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push backend image
+      - name: Build and push backend
         run: |
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/mean-backend:latest ./backend
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/mean-backend:latest
 
-      - name: Build and push frontend image
+      - name: Build and push frontend
         run: |
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/mean-frontend:latest ./frontend
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/mean-frontend:latest
 
-  # ── JOB 2: Deploy to EC2 via SSH ───────────────────────────────────────────
+
   deploy:
-    name: Deploy to EC2
+    name: Deploy with Blue-Green Cutover
     runs-on: ubuntu-latest
     needs: build-and-push
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Copy docker-compose.prod.yml to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host:     ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key:      ${{ secrets.EC2_SSH_KEY }}
-          source:   "docker-compose.prod.yml"
-          target:   "~/app/"
-
-      - name: SSH into EC2 and deploy
+      - name: SSH Deploy
         uses: appleboy/ssh-action@v1.0.3
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -76,30 +52,73 @@ jobs:
             set -e
             cd ~/app
 
-            # Login to Docker Hub
             echo "$DOCKERHUB_TOKEN" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
 
-            # Write .env file for docker-compose
-            cat > .env << EOF
-            DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}
-            IMAGE_TAG=latest
-            MONGO_URI=${MONGO_URI}
-            CORS_ORIGIN=${CORS_ORIGIN}
-            NODE_ENV=production
+            docker pull $DOCKERHUB_USERNAME/mean-backend:latest
+
+            # Detect currently active backend port
+            ACTIVE_PORT=$(grep -oP 'server 127.0.0.1:\K[0-9]+' /etc/nginx/conf.d/backend.conf || echo "3000")
+
+            if [ "$ACTIVE_PORT" = "3000" ]; then
+              NEW_PORT=3001
+            else
+              NEW_PORT=3000
+            fi
+
+            echo "Active port: $ACTIVE_PORT"
+            echo "Starting new container on: $NEW_PORT"
+
+            # Start new backend container
+            docker run -d \
+              --name backend_$NEW_PORT \
+              -p $NEW_PORT:3000 \
+              -e MONGO_URI=$MONGO_URI \
+              -e CORS_ORIGIN=$CORS_ORIGIN \
+              -e NODE_ENV=production \
+              --memory="300m" \
+              --restart=unless-stopped \
+              $DOCKERHUB_USERNAME/mean-backend:latest
+
+            echo "Waiting for health check..."
+
+            for i in {1..15}; do
+              if curl -sf http://localhost:$NEW_PORT/health; then
+                echo "Health check passed"
+                break
+              fi
+              sleep 2
+            done
+
+            # Update Nginx upstream
+            sudo tee /etc/nginx/conf.d/backend.conf > /dev/null <<EOF
+            upstream backend {
+                server 127.0.0.1:$NEW_PORT;
+            }
+
+            server {
+                listen 80;
+
+                location /api/ {
+                    proxy_pass http://backend;
+                    proxy_http_version 1.1;
+                    proxy_set_header Upgrade \$http_upgrade;
+                    proxy_set_header Connection 'upgrade';
+                    proxy_set_header Host \$host;
+                    proxy_cache_bypass \$http_upgrade;
+                }
+            }
             EOF
 
-            # Pull latest images
-            docker compose -f docker-compose.prod.yml pull
+            echo "Reloading Nginx..."
+            sudo nginx -s reload
 
-            # Restart containers
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans --no-build
+            echo "Stopping old container..."
+            docker stop backend_$ACTIVE_PORT || true
+            docker rm backend_$ACTIVE_PORT || true
 
-            # Show running containers
-            docker compose -f docker-compose.prod.yml ps
-
-            # Logout and clean up old images
-            docker logout
+            docker image prune -f
             docker container prune -f
-            docker image prune -a -f
 
-            echo "Deployment done!"
+            docker logout
+
+            echo "Blue-Green deployment complete."
