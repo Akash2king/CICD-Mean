@@ -507,6 +507,7 @@ docker image prune -a -f
 df -h /
 ```
 
+
 That freed up several gigabytes instantly. I now make it a habit to prune periodically, and the pipeline also runs `docker image prune -a -f` automatically after every deploy.
 
 **Lesson:** Docker images accumulate fast. On small instances, make image cleanup part of your routine — and automate it in the pipeline.
