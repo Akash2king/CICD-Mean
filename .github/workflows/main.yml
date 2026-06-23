@@ -13,17 +13,17 @@ jobs:
         run: echo "Building the application..."
 
   # New staging deployment stage
-  staging:
+  deploy-to-staging:
     runs-on: ubuntu-latest
     needs: build
     steps:
       - name: Deploy to Staging
         run: echo "Deploying application to staging..."
 
-  deploy:
+  deploy-to-prod:
     runs-on: ubuntu-latest
     # Changed from 'build' to 'staging' so it waits for staging to finish first
-    needs: staging
+    needs: deploy-to-staging
     environment: production
     steps:
       - name: Deploy to Production
