@@ -12,10 +12,18 @@ jobs:
       - name: Build Code
         run: echo "Building the application..."
 
-  deploy:
+  # New staging deployment stage
+  staging:
     runs-on: ubuntu-latest
     needs: build
-    # This line triggers the manual approval prompt
+    steps:
+      - name: Deploy to Staging
+        run: echo "Deploying application to staging..."
+
+  deploy:
+    runs-on: ubuntu-latest
+    # Changed from 'build' to 'staging' so it waits for staging to finish first
+    needs: staging
     environment: production
     steps:
       - name: Deploy to Production
