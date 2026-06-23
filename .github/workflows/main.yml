@@ -1,0 +1,22 @@
+name: Production Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build Code
+        run: echo "Building the application..."
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    # This line triggers the manual approval prompt
+    environment: production
+    steps:
+      - name: Deploy to Production
+        run: echo "Deploying application to production..."
