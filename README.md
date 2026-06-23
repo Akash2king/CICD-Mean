@@ -1,5 +1,5 @@
 # MEAN Stack CRUD App — Tutorials Manager
-
+hvj
 A full-stack CRUD application built with **MongoDB, Express, Angular 15, and Node.js**.  
 It lets you create, read, update, delete, and search tutorials.  
 It is deployed automatically using a **CI/CD pipeline** built with **GitHub Actions**, **Docker**, **Docker Hub**, and **AWS EC2**.
