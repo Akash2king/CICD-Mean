@@ -24,7 +24,10 @@ jobs:
     runs-on: ubuntu-latest
     # Changed from 'build' to 'staging' so it waits for staging to finish first
     needs: deploy-to-staging
-    environment: production
+    environment:
+      name: production
+      # This shows the link in the GitHub UI
+      url: https://myapp.com 
     steps:
       - name: Deploy to Production
         run: echo "Deploying application to production..."
